@@ -260,6 +260,8 @@ async def get_recommendations(
     if user_id not in merged_data['user_id'].unique():
         raise HTTPException(status_code=404, detail=f"User {user_id} not found")
     
+    logger.info(f"Getting {rec_type} recommendations for user {user_id}, n={n}")
+    
     try:
         # Get user history
         user_history = merged_data[merged_data['user_id'] == user_id]
@@ -269,6 +271,7 @@ async def get_recommendations(
         if rec_type == "content":
             # Get content-based recommendations
             content_recs = content_recommender.recommend_for_user(user_history, n=n, exclude_seen=exclude_seen)
+            logger.info(f"Content-based recommender returned {len(content_recs)} recommendations")
             
             recommendations = []
             for rec in content_recs:
@@ -298,6 +301,7 @@ async def get_recommendations(
         elif rec_type == "collaborative":
             # Get collaborative recommendations
             collab_recs = collab_recommender.recommend_for_user(user_id, n=n, exclude_seen=exclude_seen)
+            logger.info(f"Collaborative recommender returned {len(collab_recs)} recommendations")
             
             recommendations = []
             for rec in collab_recs:
@@ -332,6 +336,7 @@ async def get_recommendations(
                 n=n, 
                 exclude_seen=exclude_seen
             )
+            logger.info(f"Hybrid recommender returned {len(hybrid_recs)} recommendations")
             
             recommendations = []
             for rec in hybrid_recs:

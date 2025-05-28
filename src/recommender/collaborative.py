@@ -134,42 +134,37 @@ class CollaborativeFilteringRecommender:
             user_vector = self.user_factors[user_idx]
             scores = np.dot(user_vector, self.item_factors.T)
             
-            # Get top N items
-            top_items = np.argsort(scores)[::-1][:n]
+            # Create list of (item_idx, score) tuples
+            item_scores = list(enumerate(scores))
             
-            # Convert indices back to item IDs
+            # Exclude seen items if requested
+            if exclude_seen:
+                try:
+                    user_interactions = self.user_item_matrix.loc[user_id]
+                    seen_item_indices = [self.item_id_map[item] for item in user_interactions.index[user_interactions > 0]]
+                    item_scores = [(i, score) for i, score in item_scores if i not in seen_item_indices]
+                except:
+                    # If user not found in matrix, continue with all items
+                    pass
+            
+            # Sort items by score and take top N
+            item_scores = sorted(item_scores, key=lambda x: x[1], reverse=True)[:n]
+            
+            # Convert back to item IDs and format the recommendations
             recommendations = []
-            
-            for item_idx in top_items:
+            for item_idx, score in item_scores:
                 item_id = self.reverse_item_map.get(item_idx)
                 if item_id is not None:
                     recommendations.append({
                         'bundle_id': item_id,
-                        'score': float(scores[item_idx])
+                        'score': float(score)
                     })
+            
+            return recommendations
                         
         except Exception as e:
             logger.error(f"Error generating recommendations: {str(e)}")
             return []
-        # Exclude seen items if requested
-        if exclude_seen:
-            user_interactions = self.user_item_matrix.loc[user_id]
-            seen_item_indices = [self.item_id_map[item] for item in user_interactions.index[user_interactions > 0]]
-            item_scores = [(i, score) for i, score in item_scores if i not in seen_item_indices]
-        
-        # Sort items by score and take top N
-        item_scores = sorted(item_scores, key=lambda x: x[1], reverse=True)[:n]
-        
-        # Convert back to item IDs and format the recommendations
-        recommendations = [
-            {
-                'bundle_id': self.reverse_item_map[item_idx],
-                'collab_score': float(score)
-            }
-            for item_idx, score in item_scores
-        ]
-        
-        return recommendations
     
     def recommend_similar_items(self, item_id: str, n: int = 10) -> List[Dict]:
         """

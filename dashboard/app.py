@@ -2430,9 +2430,9 @@ def display_model_evaluation():
                         'Metric': 'Precision@10',
                         'Value': metrics_df[metrics_df['Model'] == model]['precision@10'].iloc[0]
                     })
-                
+
                 precision_df = pd.DataFrame(precision_data)
-                
+
                 fig = px.bar(
                     precision_df, 
                     x='Model', 
@@ -2458,9 +2458,9 @@ def display_model_evaluation():
                         'Metric': 'Recall@10',
                         'Value': metrics_df[metrics_df['Model'] == model]['recall@10'].iloc[0]
                     })
-                
+
                 recall_df = pd.DataFrame(recall_data)
-                
+
                 fig = px.bar(
                     recall_df, 
                     x='Model', 
@@ -2925,7 +2925,16 @@ def display_explainability():
                     # Get explanation
                     user_id = None
                     if st.session_state.user_history is not None and not st.session_state.user_history.empty:
-                        user_id = st.session_state.user_history['user_id'].iloc[0]
+                        if 'user_id' in st.session_state.user_history.columns:
+                            user_id = st.session_state.user_history['user_id'].iloc[0]
+                        else:
+                            # Try to get user_id from session state or context
+                            if hasattr(st.session_state, 'current_user_id'):
+                                user_id = st.session_state.current_user_id
+                            else:
+                                # Get from merged data if available
+                                if merged_data is not None and len(merged_data) > 0:
+                                    user_id = merged_data['user_id'].iloc[0]
 
                     explanation = get_recommendation_explanation(
                         rec, 
@@ -2943,7 +2952,7 @@ def display_explainability():
                         st.markdown("#### Feature Importance:")
                         feature_chart = st.session_state.recommendation_explainer.generate_feature_importance_chart(
                             rec, rec.get('algorithm', 'hybrid'))
-                        st.plotly_chart(feature_chart, use_container_width=True)
+                        st.plotly_chart(feature_chart, use_container_width=True, key=f"feature_chart_{i}")
 
                     else:  # Combined view
                         # Show both text and chart
@@ -2956,7 +2965,7 @@ def display_explainability():
                         with col2:
                             feature_chart = st.session_state.recommendation_explainer.generate_feature_importance_chart(
                                 rec, rec.get('algorithm', 'hybrid'))
-                            st.plotly_chart(feature_chart, use_container_width=True)
+                            st.plotly_chart(feature_chart, use_container_width=True, key=f"combined_chart_{i}")
 
                     st.markdown("---")
 
