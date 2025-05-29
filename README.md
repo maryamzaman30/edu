@@ -20,11 +20,16 @@ project-root/
 ├── api/                 # FastAPI backend
 │   └── main.py
 │
+├── models
+│   └──content_based_model.pkl
+│   └──svd_hybrid_model.pkl
+│
 ├── dashboard/           # Streamlit dashboard
-│   └── enhanced_dashboard.py
+│   └── app.py
 │
 ├── tests/               # pytest unit tests
 │
 ├── README.md
 ├── requirements.txt
 └── .gitignore
+
